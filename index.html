@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lutz Jesco ChatBot • HTML/CSS/JS/Node</title>
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --panel: #111826;
+      --muted: #98a2b3;
+      --card: #0e1623;
+      --text: #e5e7eb;
+      --accent: #7c3aed;
+      --accent-2: #22d3ee;
+      --border: #1f2937;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 800px at 80% -20%, rgba(124,58,237,0.25), transparent 60%),
+                  radial-gradient(800px 500px at -10% 110%, rgba(34,211,238,0.2), transparent 60%),
+                  var(--bg);
+      color: var(--text);
+      font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, Noto Sans, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    .app {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      height: 100vh;
+    }
+    aside {
+      border-right: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(17,24,38,0.9), rgba(17,24,38,0.7));
+      backdrop-filter: blur(8px);
+      padding: 18px;
+      overflow: auto;
+    }
+    main { display: grid; grid-template-rows: 1fr auto; height: 100vh; }
+
+    .brand {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+    }
+    .logo {
+      width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 8px 30px rgba(124,58,237,.35), inset 0 0 12px rgba(255,255,255,.08);
+    }
+    h1 { font-size: 16px; margin: 0; letter-spacing: .2px; }
+    .subtitle { color: var(--muted); font-size: 12px; margin-top: -2px; }
+
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+    .panel + .panel { margin-top: 12px; }
+    .panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 4px 0 10px; }
+
+    label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 6px; }
+    input[type="text"], input[type="number"], select, textarea {
+      width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--card); color: var(--text);
+      outline: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.02);
+    }
+    textarea { min-height: 80px; resize: vertical; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .tip { font-size: 12px; color: var(--muted); margin-top: 8px; }
+    .danger { color: var(--danger); font-weight: 600; }
+
+    .chat {
+      overflow: auto; padding: 24px; scroll-behavior: smooth;
+    }
+    .bubble {
+      display: grid; grid-template-columns: 36px 1fr; gap: 12px; margin: 8px 0; align-items: start;
+    }
+    .avatar { width: 36px; height: 36px; border-radius: 10px; background: #0f172a; border: 1px solid var(--border); display: grid; place-items: center; font-weight: 700; color: #a3a3ff; }
+    .assistant { color: #67e8f9; }
+    .user { color: #c4b5fd; }
+    .bubble .content { background: var(--card); border: 1px solid var(--border); padding: 12px 14px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+
+    .content pre { background: #0b1220; border: 1px solid #172033; padding: 12px; border-radius: 12px; overflow: auto; }
+    .content code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .content a { color: #93c5fd; }
+
+    .composer { border-top: 1px solid var(--border); padding: 12px; background: linear-gradient(180deg, rgba(11,15,20,0.15), rgba(11,15,20,0.35)); }
+    .composer .wrap { max-width: 1000px; margin: 0 auto; display: grid; gap: 12px; }
+    .input-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+    .prompt { min-height: 80px; max-height: 220px; overflow: auto; }
+
+    button {
+      appearance: none; border: 1px solid var(--border); background: linear-gradient(180deg, #182235, #131b2b);
+      color: var(--text); border-radius: 12px; padding: 10px 14px; font-weight: 600; cursor: pointer;
+      box-shadow: 0 10px 25px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.06);
+    }
+    button.primary { background: linear-gradient(180deg, #3b82f6, #1d4ed8); border-color: rgba(255,255,255,.12); }
+    button.ghost { background: transparent; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+
+    .actions { display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
+    .small { font-size: 12px; color: var(--muted); }
+
+    .badge { padding: 4px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); font-size: 11px; }
+    .settings-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+    .toast { position: fixed; right: 16px; bottom: 16px; background: var(--panel); border: 1px solid var(--border); padding: 10px 12px; border-radius: 12px; display: none; }
+    .toast.show { display: block; }
+
+    .spinner { width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255,255,255,.15); border-top-color: rgba(255,255,255,.8); animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      aside { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ⚠️ Security heads-up:
+       For local testing you *may* paste an API key below. Never ship a public site with a client-side key.
+       In production, route requests through your own backend (sample Express server snippet provided in
+       the HTML comments at the bottom). -->
+
+  <div class="app">
+    <aside>
+      <div class="brand">
+        <div class="logo" aria-hidden></div>
+        <div>
+          <h1>Lutz Jesco ChatBot</h1>
+          <div class="subtitle">HTML/CSS/JS/Node Stack</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>API</h2>
+        <label>OpenAI API Key (local dev only)</label>
+        <input type="text" id="apiKey" placeholder="sk-... (never embed in prod)" autocomplete="off" />
+        <div class="tip">Keep this field empty when using your own backend proxy.</div>
+      </div>
+
+      <div class="panel">
+        <h2>Model & Params</h2>
+        <label for="model">Model</label>
+        <select id="model">
+          <option value="gpt-4o-mini">gpt-4o-mini (fast, cheap)</option>
+          <option value="gpt-4o">gpt-4o (higher quality)</option>
+          <option value="gpt-4.1" selected>gpt-4.1</option>
+          <option value="gpt-3.5-turbo">gpt-3.5-turbo (legacy)</option>
+        </select>
+        <div class="row">
+          <div>
+            <label>Temperature</label>
+            <input type="number" step="0.1" min="0" max="2" id="temperature" value="0.7" />
+          </div>
+          <div>
+            <label>Max tokens</label>
+            <input type="number" step="1" min="1" max="8192" id="maxTokens" value="1024" />
+          </div>
+        </div>
+        <label>System prompt</label>
+        <textarea id="system" placeholder="You are a helpful assistant.">You are a highly knowledgeable technical assistant specializing in pumps, motors, pump sets, and related industrial equipment, with deep expertise in Lutz Jesco products and competitor products. You must provide precise, accurate, and actionable answers, never guessing, and always cross-checking information against the Lutz Jesco website or other reliable sources to ensure relevance and correctness. For every product, you must deliver all technical specifications in depth, including flow rate, viscosity range, maximum pressure, pump type, wetted materials and chemical compatibility, motor voltage and power, temperature range, dimensions, connection types, and operational limits. Your responses should be concise and structured, giving multiple options when appropriate, and highlighting key considerations such as material differences, chemical resistance, and performance trade-offs. You should adapt your guidance to the user’s knowledge level: if the user knows their requirements, provide a full spec sheet and recommendations; if they do not, guide them quickly through critical selection criteria while still providing complete technical specifications. When comparing Lutz Jesco with competitor products, clearly outline all differences in performance, materials, and suitability, offering alternatives or upgrades when relevant. All outputs must prioritize technical thoroughness, precision, and applicability, ensuring the user can immediately act on the information. Do not display information in tables, just bullet point information. If the user asks for grease pumps, you must extract information about "Lube Drives" from the Lutz website. The Lube Drives are pumps that have motors with them so no need for anything else. DO NOT PRINT INFORMATION IN TABLES. Print all information as bullets or lists. For dosing pumps, adhere to the following list: 						
+        Chemical
+        Application
+        Material
+        Sodium hypochlorite
+        Water disinfection
+        PVC, PVDF. Never Stainless Steel
+        Ferric Sulphate
+        Wastewater Treatment
+        PVC, PP
+        Ferric Chloride
+        Wastewater Treatment
+        PVC, PP, Never Stainless steel
+        96-98% Sulphuric Acid
+        pH Control
+        PVDF or Stainless Steel
+        Polymer
+        Flocculation
+        PVC with spring loaded valves
+        Lime Slurry
+        pH Control
+        PVC with Stainess Steel valves
+        Chlorine Dioxide
+        Water disinfection, legionella control
+        PVC, PVDF  
+        Hydrochloric Acid
+        pH Control
+        PVC
+        PAC
+        flocculation in pool water treatment
+        PVC
+        Methanol
+        Denitrification
+        Stainess Steel ATEX
+        Boiler feed chemicals
+        Boiler water treatment
+        Generally PVC/C/EPDM if alkaline pH. When recommending dosing pumps ensure that you recommend a memdos or magdos pump of some variant that fits the user requirement.</textarea>
+        <div class="settings-row" style="margin-top:10px">
+          <span class="badge" id="contextTokens">0 tokens in context</span>
+          <button class="ghost" id="clearChat">Clear chat</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Endpoint</h2>
+        <label>Base URL</label>
+        <input type="text" id="baseUrl" value="https://api.openai.com/v1" />
+        <label>Path</label>
+        <select id="path">
+          <option value="/chat/completions" selected>/chat/completions (SSE)</option>
+        </select>
+        <div class="tip">Switch Base URL to your proxy in production, e.g. <code>/api</code>.</div>
+      </div>
+
+      <div class="panel">
+        <h2>Export</h2>
+        <button id="exportJson">Export conversation (JSON)</button>
+        <div class="tip">Includes role, content, timestamps.
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Heads‑up</h2>
+        <div class="tip"><span class="danger">Never</span> expose a live API key in client-side code. Use a backend proxy that injects the key server-side.</div>
+      </div>
+    </aside>
+
+    <main>
+      <div id="chat" class="chat" aria-live="polite" aria-busy="false"></div>
+
+      <div class="composer">
+        <div class="wrap">
+          <div class="actions small">
+            <span>Press <b>Enter</b> to send • <b>Shift+Enter</b> for newline</span>
+            <span class="badge" id="status">Idle</span>
+          </div>
+          <div class="input-row">
+            <textarea id="prompt" class="prompt" placeholder="Ask me anything…"></textarea>
+            <div style="display:flex; gap:8px; align-items:flex-start;">
+              <button id="stop" disabled>Stop</button>
+              <button id="send" class="primary">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast">Copied to clipboard</div>
+
+  <template id="bubbleTpl">
+    <div class="bubble">
+      <div class="avatar"></div>
+      <div class="content"></div>
+    </div>
+  </template>
+
+  <script>
+    // --- Minimal local state ---
+    const els = {
+      chat: document.getElementById('chat'),
+      prompt: document.getElementById('prompt'),
+      send: document.getElementById('send'),
+      stop: document.getElementById('stop'),
+      apiKey: document.getElementById('apiKey'),
+      model: document.getElementById('model'),
+      temperature: document.getElementById('temperature'),
+      maxTokens: document.getElementById('maxTokens'),
+      system: document.getElementById('system'),
+      baseUrl: document.getElementById('baseUrl'),
+      path: document.getElementById('path'),
+      clearChat: document.getElementById('clearChat'),
+      contextTokens: document.getElementById('contextTokens'),
+      exportJson: document.getElementById('exportJson'),
+      status: document.getElementById('status'),
+      toast: document.getElementById('toast'),
+      bubbleTpl: document.getElementById('bubbleTpl')
+    };
+
+    // Conversation memory
+    const memory = [];
+
+    // Util: very tiny Markdown renderer (headings, bold/italic, inline/blocks of code, links, lists)
+    function mdToHtml(text) {
+      const esc = s => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+      // code blocks
+      let html = esc(text)
+        .replace(/```([\s\S]*?)```/g, (_, code) => `<pre><code>${code.replace(/\n/g,'\n')}</code></pre>`)
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+        .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+        .replace(/\*([^*]+)\*/g, '<i>$1</i>')
+        .replace(/\n- (.*)/g, '<ul><li>$1</li></ul>')
+        .replace(/\n\n/g, '<br/><br/>')
+        .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener">$1<\/a>');
+      // merge multiple <ul>
+      html = html.replace(/<\/ul>\s*<ul>/g, '');
+      return html;
+    }
+
+    function showToast(msg) {
+      els.toast.textContent = msg; els.toast.classList.add('show');
+      setTimeout(() => els.toast.classList.remove('show'), 1600);
+    }
+
+    function addBubble(role, htmlContent) {
+      const node = els.bubbleTpl.content.cloneNode(true);
+      const bubble = node.querySelector('.bubble');
+      const avatar = node.querySelector('.avatar');
+      const content = node.querySelector('.content');
+      avatar.textContent = role === 'assistant' ? 'G' : 'Y';
+      avatar.classList.add(role === 'assistant' ? 'assistant' : 'user');
+      content.innerHTML = htmlContent;
+      // Copy on click
+      content.addEventListener('dblclick', () => {
+        navigator.clipboard.writeText(content.textContent).then(() => showToast('Copied'));
+      });
+      els.chat.appendChild(node);
+      els.chat.scrollTop = els.chat.scrollHeight;
+      return els.chat.lastElementChild.querySelector('.content');
+    }
+
+    function tokenEstimate(messages) {
+      // Naive token estimate (~4 chars/token). For display only.
+      const chars = messages.map(m => m.content).join('').length;
+      return Math.ceil(chars / 4);
+    }
+
+    function updateContextBadge() {
+      const t = tokenEstimate(memory);
+      els.contextTokens.textContent = `${t} tokens in context`;
+    }
+
+    function setBusy(busy) {
+      els.status.textContent = busy ? 'Responding…' : 'Idle';
+      els.send.disabled = busy; els.stop.disabled = !busy;
+      document.querySelector('main').setAttribute('aria-busy', busy ? 'true' : 'false');
+    }
+
+    // Streaming Chat Completions via SSE
+    let abortController = null;
+    async function sendMessage() {
+      const content = els.prompt.value.trim();
+      if (!content) return;
+
+      // Build messages (with system)
+      const system = els.system.value.trim();
+      const messages = [];
+      if (system) messages.push({ role: 'system', content: system });
+      for (const m of memory) messages.push(m);
+      messages.push({ role: 'user', content });
+
+      // Render user bubble
+      addBubble('user', mdToHtml(content));
+      els.prompt.value = '';
+      updateContextBadge();
+
+      // Prepare assistant bubble
+      const assistantEl = addBubble('assistant', '<span class="small">Thinking…</span>');
+
+      const useProxy = !els.apiKey.value;
+      const baseUrl = els.baseUrl.value.replace(/\/$/, '');
+      const path = els.path.value;
+
+      abortController = new AbortController();
+      setBusy(true);
+      try {
+        const resp = await fetch(`${baseUrl}${path}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(useProxy ? {} : { 'Authorization': `Bearer ${els.apiKey.value}` })
+          },
+          body: JSON.stringify({
+            model: els.model.value,
+            messages,
+            temperature: parseFloat(els.temperature.value || '0.7'),
+            max_tokens: parseInt(els.maxTokens.value || '1024', 10),
+            stream: true
+          }),
+          signal: abortController.signal
+        });
+
+        if (!resp.ok) {
+          const text = await resp.text();
+          throw new Error(`HTTP ${resp.status}: ${text}`);
+        }
+
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let acc = '';
+        let fullText = '';
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          acc += chunk;
+
+          const lines = acc.split(/\n/);
+          acc = lines.pop(); // keep last partial line
+
+          for (const line of lines) {
+            if (!line.startsWith('data:')) continue;
+            const data = line.replace('data: ', '');
+            if (data === '[DONE]') continue;
+            try {
+              const json = JSON.parse(data);
+              const delta = json.choices?.[0]?.delta?.content || '';
+              fullText += delta;
+              assistantEl.innerHTML = mdToHtml(fullText);
+              els.chat.scrollTop = els.chat.scrollHeight;
+            } catch (e) {
+              // ignore partials
+            }
+          }
+        }
+
+        // Save to memory
+        memory.push({ role: 'user', content });
+        memory.push({ role: 'assistant', content: fullText });
+        updateContextBadge();
+      } catch (err) {
+        assistantEl.innerHTML = `<span class="danger">${(err && err.message) || err}</span>`;
+      } finally {
+        setBusy(false);
+        abortController = null;
+      }
+    }
+
+    // UI wiring
+    els.send.addEventListener('click', sendMessage);
+    els.stop.addEventListener('click', () => { if (abortController) abortController.abort(); });
+    els.clearChat.addEventListener('click', () => { memory.length = 0; els.chat.innerHTML = ''; updateContextBadge(); });
+    els.exportJson.addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify({ createdAt: new Date().toISOString(), messages: memory }, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'conversation.json'; a.click(); URL.revokeObjectURL(url);
+    });
+
+    els.prompt.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); els.send.click(); }
+    });
+
+    updateContextBadge();
+  </script>
+
+  <!--
+  === Simple Express proxy (recommended for production) ===
+
+  // server.js
+  import express from 'express';
+  import fetch from 'node-fetch';
+
+  const app = express();
+  app.use(express.json());
+
+  // Store your API key in env var: OPENAI_API_KEY
+  app.post('/api/chat', async (req, res) => {
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({ ...req.body, stream: true }),
+    });
+
+    // Pipe SSE stream through
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    r.body.on('data', (chunk) => res.write(chunk));
+    r.body.on('end', () => res.end());
+    r.body.on('error', (err) => { res.end(); console.error(err); });
+  });
+
+  app.listen(3000, () => console.log('Proxy on http://localhost:3000'));
+
+  // Then in the UI set Base URL to "/api" and keep Path = "/chat/completions"
+
+  -->
+</body>
+</html>
