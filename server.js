@@ -8,11 +8,12 @@ app.use(express.json());
 
 app.post("/api/chat", async (req, res) => {
   try {
-    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+    const r = await fetch("https://api.openai.com/v1/files", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        "OpenAI-Beta": "assistants=v2", 
       },
       body: JSON.stringify(req.body),
     });
@@ -24,4 +25,6 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
-app.listen(3000, () => console.log("Server running on http://localhost:3000"));
+app.listen(3000, () =>
+  console.log("Server running on http://localhost:3000")
+);
